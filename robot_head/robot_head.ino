@@ -4,8 +4,12 @@
 #define DISTANCE_SENSOR_echoPin_2 8
 #define MOUTH_LED_pin 4
 
+#include <ros.h>
+
 #include "distance_sensor.h"
 #include "mouth_leds.h"
+
+
 
 DistanceSensor distanceSensor;
 MouthLeds mouthLeds;
