@@ -28,7 +28,7 @@ class DistanceSensor {
       long duration;
  
       digitalWrite(trigPin, HIGH);
-      delayMicroseconds((trigPin==trigPin2) ? 10 : 10);
+      delayMicroseconds(10);
       digitalWrite(trigPin, LOW);
       duration = pulseIn(echoPin, HIGH, 60000 /* wait up to 60ms for return pulse */ );
       // pulseIn will only return 0 if it timed out. (or if echoPin was already to 1, but it should not happen)
@@ -42,7 +42,7 @@ class DistanceSensor {
       return duration;
     }
   
-    float getDistance_cm(bool &ok) {
+    void getDistance_cm(bool &ok, float &distance1_cm, float &distance2_cm) {
       long now_ms = millis();
       int diff = now_ms - lastTime_ms;
       if (diff < 60) {
@@ -56,27 +56,27 @@ class DistanceSensor {
       long duration2_us = 0;
       if(duration_us != 0) {
         unsigned long startPulse_us = micros();
-        duration2_us = doPulseAndMeasureTime_us(trigPin2, echoPin2);
-        duration2_us = micros() - startPulse_us;
+        //duration2_us = doPulseAndMeasureTime_us(trigPin2, echoPin2);
+        if(duration2_us)
+          duration2_us = micros() - startPulse_us;
       }
 
-      float distance1_cm = (duration_us/2.0) * speed_of_sound / 10000;
+      distance1_cm = (duration_us/2.0) * speed_of_sound / 10000;
 
-      float distance2_cm = 0;
+      distance2_cm = 0;
       if(duration2_us != 0)
         distance2_cm = distance1_cm + ((duration2_us)/2.0) * speed_of_sound / 10000;
 //        distance2_cm = distance1_cm + ((duration2_us-448)/2.0) * speed_of_sound / 10000;
 
-      Serial.print("distance2:");
+      /*Serial.print("distance2:");
       Serial.print(distance2_cm );
-      Serial.print("   ");
+      Serial.print("   ");*/
     
       ok = (distance1_cm < 200 && distance1_cm > 0);
       if(!ok)
         distance1_cm = last_distance_cm;
       else
         last_distance_cm = distance1_cm;
-       return distance1_cm;
     }
 };
 
