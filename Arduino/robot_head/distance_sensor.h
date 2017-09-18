@@ -26,11 +26,13 @@ class DistanceSensor {
 
     long doPulseAndMeasureTime_us(int trigPin, int echoPin) {
       long duration;
- 
+
+      digitalWrite(trigPin, LOW);
+      delayMicroseconds(2);
       digitalWrite(trigPin, HIGH);
       delayMicroseconds(10);
       digitalWrite(trigPin, LOW);
-      duration = pulseIn(echoPin, HIGH, 60000 /* wait up to 60ms for return pulse */ );
+      duration = pulseIn(echoPin, HIGH);
       // pulseIn will only return 0 if it timed out. (or if echoPin was already to 1, but it should not happen)
       /*if(duration == 0) // If we timed out
       {
@@ -56,7 +58,7 @@ class DistanceSensor {
       long duration2_us = 0;
       if(duration_us != 0) {
         unsigned long startPulse_us = micros();
-        //duration2_us = doPulseAndMeasureTime_us(trigPin2, echoPin2);
+        duration2_us = doPulseAndMeasureTime_us(trigPin2, echoPin2);
         if(duration2_us)
           duration2_us = micros() - startPulse_us;
       }
