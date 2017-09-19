@@ -1,4 +1,5 @@
 
+//#define USE_SECOND_SENSOR
 
 class DistanceSensor {
   private:
@@ -34,13 +35,13 @@ class DistanceSensor {
       digitalWrite(trigPin, LOW);
       duration = pulseIn(echoPin, HIGH);
       // pulseIn will only return 0 if it timed out. (or if echoPin was already to 1, but it should not happen)
-      /*if(duration == 0) // If we timed out
+      if(duration == 0) // If we timed out
       {
         pinMode(echoPin, OUTPUT); // Then we set echo pin to output mode
         digitalWrite(echoPin, LOW); // We send a LOW pulse to the echo pin
         delayMicroseconds(200);
         pinMode(echoPin, INPUT); // And finaly we come back to input mode
-      }*/
+      }
       return duration;
     }
   
@@ -56,12 +57,15 @@ class DistanceSensor {
       long duration_us = doPulseAndMeasureTime_us(trigPin1, echoPin1);
 
       long duration2_us = 0;
+#ifdef USE_SECOND_SENSOR
       if(duration_us != 0) {
+        delayMicroseconds(10);
         unsigned long startPulse_us = micros();
         duration2_us = doPulseAndMeasureTime_us(trigPin2, echoPin2);
         if(duration2_us)
           duration2_us = micros() - startPulse_us;
       }
+#endif
 
       distance1_cm = (duration_us/2.0) * speed_of_sound / 10000;
 
