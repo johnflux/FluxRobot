@@ -49,6 +49,11 @@ class MouthLeds {
       else
         colorWipe(strip.Color(255, 0, 0), 0, width); // Red
     }
+
+    void setMouthBad() {
+      static bool blink = true;
+      colorWipe(strip.Color(0,0,blink?125:0), strip.Color(255, 0, 0), strip.numPixels() );
+    }
   private:
     // Fill the dots one after the other with a color
     void colorWipe(uint32_t c_on, uint32_t c_off, uint8_t width) {

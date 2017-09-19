@@ -33,20 +33,19 @@ class RosCommunication {
     }
 
     void setup() {
-      ;
       nh.initNode();
       nh.advertise(pub_range1);
       nh.advertise(pub_range2);
       setupDistanceSensorMessage();
     }
 
-    void sendDistanceInfo(float distance1_cm, float distance2_cm) {
-      range_msg.range = distance1_cm/10.0;
+    void sendDistanceInfo(float distance1_m, float distance2_m) {
+      range_msg.range = distance1_m;
       range_msg.header.stamp = nh.now();
       range_msg.header.frame_id =  frameid1;
       pub_range1.publish(&range_msg);
-
-      range_msg.range = distance2_cm/10.0;
+      nh.spinOnce();
+      range_msg.range = distance2_m;
       range_msg.header.frame_id =  frameid2;
       pub_range2.publish(&range_msg);
       nh.spinOnce();

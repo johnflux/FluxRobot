@@ -1,5 +1,5 @@
 
-//#define USE_SECOND_SENSOR
+#define USE_SECOND_SENSOR
 
 class DistanceSensor {
   private:
@@ -7,7 +7,7 @@ class DistanceSensor {
     int echoPin1;
     int trigPin2;
     int echoPin2;
-    float last_distance_cm;
+    float last_distance_m;
     long lastTime_ms;
     int temperature_in_c = 20;
   public:
@@ -20,7 +20,7 @@ class DistanceSensor {
       pinMode(echoPin1, INPUT);
       pinMode(trigPin2, OUTPUT);
       pinMode(echoPin2, INPUT);
-      last_distance_cm = 0;
+      last_distance_m = 0;
       digitalWrite(trigPin1, LOW);
       digitalWrite(trigPin2, LOW);
     }
@@ -45,7 +45,7 @@ class DistanceSensor {
       return duration;
     }
   
-    void getDistance_cm(bool &ok, float &distance1_cm, float &distance2_cm) {
+    void getDistance_m(bool &ok, float &distance1_m, float &distance2_m) {
       long now_ms = millis();
       int diff = now_ms - lastTime_ms;
       if (diff < 60) {
@@ -67,22 +67,17 @@ class DistanceSensor {
       }
 #endif
 
-      distance1_cm = (duration_us/2.0) * speed_of_sound / 10000;
+      distance1_m = (duration_us/2.0) * speed_of_sound / 1000000.0;
 
-      distance2_cm = 0;
+      distance2_m = 0;
       if(duration2_us != 0)
-        distance2_cm = distance1_cm + ((duration2_us)/2.0) * speed_of_sound / 10000;
-//        distance2_cm = distance1_cm + ((duration2_us-448)/2.0) * speed_of_sound / 10000;
+        distance2_m = distance1_m + (duration2_us/2.0) * speed_of_sound / 1000000.0;
 
-      /*Serial.print("distance2:");
-      Serial.print(distance2_cm );
-      Serial.print("   ");*/
-    
-      ok = (distance1_cm < 200 && distance1_cm > 0);
+      ok = (distance1_m < 4 && distance1_m >= 0);
       if(!ok)
-        distance1_cm = last_distance_cm;
+        distance1_m = last_distance_m;
       else
-        last_distance_cm = distance1_cm;
+        last_distance_m = distance1_m;
     }
 };
 
