@@ -61,6 +61,6 @@ void loop() {
   } else {
     mouthLeds.setMouthBad();
   }
-  Serial.flush();
-  
+
+  rosCommunication.spinOnce();  
 }
