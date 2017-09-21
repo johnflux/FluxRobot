@@ -8,7 +8,7 @@ class DistanceSensor {
     int trigPin2;
     int echoPin2;
     float last_distance_m;
-    long lastTime_ms;
+    unsigned long lastTime_ms;
     int temperature_in_c = 20;
   public:
     void setup(int trigPin1, int echoPin1, int trigPin2, int echoPin2 ) {
@@ -21,6 +21,7 @@ class DistanceSensor {
       pinMode(trigPin2, OUTPUT);
       pinMode(echoPin2, INPUT);
       last_distance_m = 0;
+      lastTime_ms = 0;
       digitalWrite(trigPin1, LOW);
       digitalWrite(trigPin2, LOW);
     }
@@ -46,12 +47,11 @@ class DistanceSensor {
     }
   
     void getDistance_m(bool &ok, float &distance1_m, float &distance2_m) {
-      long now_ms = millis();
-      int diff = now_ms - lastTime_ms;
-      if (diff < 60) {
+      unsigned long now_ms = millis();
+      unsigned long diff = now_ms - lastTime_ms;
+      if (diff < 60)
         delay(60 - diff); // Wait for previous echo to finish
-        lastTime_ms = now_ms = millis();
-      }
+      lastTime_ms = millis();
       const float speed_of_sound = 331.3 + 0.606 * temperature_in_c;
 
       long duration_us = doPulseAndMeasureTime_us(trigPin1, echoPin1);

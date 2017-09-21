@@ -43,5 +43,5 @@ if [ ! -f "$OBJDUMP" ]; then
 	exit 1
 fi
 set -x
-$OBJDUMP -d -S --start-address=0x93A --line-numbers -C "$ELF" | head -n 20
+$OBJDUMP -d -S --start-address=$1 --line-numbers -C "$ELF" | head -n 20
 

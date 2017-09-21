@@ -12,9 +12,17 @@ micro. We never return from this function.
 */
 uint8_t *upStack;
 extern "C" {
-  void appMon_asm_gate(void) __attribute__((used));
-  void appMon_asm_gate(void){
+  inline void appMon_asm_gate(void) __attribute__((used)) __attribute__((__always_inline__));
+  inline void appMon_asm_gate(void) {
+    wdt_disable();
     ApplicationMonitor.WatchdogInterruptHandler(upStack);
+    // Wait for next watchdog time out to reset system.
+    // If the watch dog timeout is too short, it doesn't
+    // give the program much time to reset it before the
+    // next timeout. So we can be a bit generous here. 
+    wdt_enable(WDTO_120MS);
+    while (true)
+    ;
   } 
 }
 
@@ -129,14 +137,6 @@ void CApplicationMonitor::WatchdogInterruptHandler(uint8_t *puProgramAddress)
   else
     ++Header.m_uSavedReports;
   SaveHeader(Header);
-
-  // Wait for next watchdog time out to reset system.
-  // If the watch dog timeout is too short, it doesn't
-  // give the program much time to reset it before the
-  // next timeout. So we can be a bit generous here. 
-  wdt_enable(WDTO_120MS);
-  while (true)
-    ;
 }
 
 void CApplicationMonitor::LoadHeader(CApplicationMonitorHeader &rReportHeader) const

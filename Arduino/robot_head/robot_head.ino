@@ -21,7 +21,7 @@ void setup() {
   Serial.begin(BAUDRATE); // Change via the #define if you want to change this, since ros also needs to know about this, in ros_communication.h
   Serial.println("Hello!  Dumping information:");
   ApplicationMonitor.Dump(Serial, false);
-  ApplicationMonitor.EnableWatchdog(Watchdog::CApplicationMonitor::Timeout_500ms); // This should be plenty of time to do anything - sonar requires just 60ms between measurements
+  ApplicationMonitor.EnableWatchdog(Watchdog::CApplicationMonitor::Timeout_2s); // This should be plenty of time to do anything - sonar requires just 60ms between measurements
   MCUSR = MCUSR & B11110111;
   WDTCSR = WDTCSR | B00011000; 
   WDTCSR = B00100001;
