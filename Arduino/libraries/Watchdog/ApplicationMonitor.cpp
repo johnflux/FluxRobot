@@ -3,6 +3,8 @@
 
 using namespace Watchdog;
 
+extern void custom_crash_function(uint16_t);
+
 /*
 Function called when the watchdog interrupt fires. The function is naked so that
 we don't get program stated pushed onto the stack. Consequently the top two
@@ -15,6 +17,7 @@ extern "C" {
   inline void appMon_asm_gate(void) __attribute__((used)) __attribute__((__always_inline__));
   inline void appMon_asm_gate(void) {
     wdt_disable();
+    Serial.flush();
     ApplicationMonitor.WatchdogInterruptHandler(upStack);
     // Wait for next watchdog time out to reset system.
     // If the watch dog timeout is too short, it doesn't
@@ -137,6 +140,7 @@ void CApplicationMonitor::WatchdogInterruptHandler(uint8_t *puProgramAddress)
   else
     ++Header.m_uSavedReports;
   SaveHeader(Header);
+  custom_crash_function((uint16_t(m_CrashReport.m_auAddress[0])<<8) + m_CrashReport.m_auAddress[1]);
 }
 
 void CApplicationMonitor::LoadHeader(CApplicationMonitorHeader &rReportHeader) const

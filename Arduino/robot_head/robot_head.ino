@@ -7,6 +7,8 @@
 /* If you want to modify the BAUDRATE, modify the ros_serial bash script as well */
 #define BAUDRATE 115200
 
+void custom_crash_function(uint16_t return_address);
+
 #include "ApplicationMonitor.h"
 #include "distance_sensor.h"
 #include "mouth_leds.h"
@@ -17,9 +19,14 @@ RosCommunication rosCommunication;
 DistanceSensor distanceSensor;
 MouthLeds mouthLeds;
 
+bool hasConnected=false;
+
+void custom_crash_function(uint16_t return_address) {
+  rosCommunication.sendCrashInfo(return_address);
+}
+
 void setup() {
   Serial.begin(BAUDRATE); // Change via the #define if you want to change this, since ros also needs to know about this, in ros_communication.h
-  Serial.println("Hello!  Dumping information:");
   ApplicationMonitor.Dump(Serial, false);
   ApplicationMonitor.EnableWatchdog(Watchdog::CApplicationMonitor::Timeout_2s); // This should be plenty of time to do anything - sonar requires just 60ms between measurements
   MCUSR = MCUSR & B11110111;
@@ -32,7 +39,6 @@ void setup() {
                        DISTANCE_SENSOR_trigPin_2, DISTANCE_SENSOR_echoPin_2);
   mouthLeds.setup(MOUTH_LED_pin);
   rosCommunication.setup();
-  rosCommunication.dumpWatchdogInfo(false, ApplicationMonitor);
 }
 
 void loop() {
@@ -43,13 +49,18 @@ void loop() {
   // the program is alive...for now. 
   ApplicationMonitor.IAmAlive();
   distanceSensor.getDistance_m(ok, distance1_m, distance2_m);
-  if(!rosCommunication.isConnected())
+  if(!rosCommunication.isConnected()) {
     Serial.println(distance1_m);
+  } else if (!hasConnected) {
+    hasConnected = true;
+    rosCommunication.dumpWatchdogInfo(false, ApplicationMonitor);
+  }
   if(ok) {
     mouthLeds.setMouthWidth(distance1_m*10.0 + 0.5);
     rosCommunication.sendDistanceInfo(distance1_m, distance2_m);
   } else {
     mouthLeds.setMouthBad();
   }
+  Serial.flush();
   
 }

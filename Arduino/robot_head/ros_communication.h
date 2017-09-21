@@ -5,11 +5,12 @@
 
 namespace ros {
   // Make these numbers as small as possible to save memory
-  typedef NodeHandle_<ArduinoHardware, 1/*max subscribers*/, 2/*max publishers*/, 150/*input size*/, 150/*output size*/> NodeHandle;
+  typedef NodeHandle_<ArduinoHardware, 2/*max subscribers*/, 4/*max publishers*/, 100/*input size*/, 200/*output size*/> NodeHandle;
 };
 
 #include <ros/time.h>
 #include <sensor_msgs/Range.h>
+#include "ApplicationMonitor.h"
 
 class RosCommunication {
 
@@ -44,14 +45,11 @@ class RosCommunication {
       range_msg.header.stamp = nh.now();
       range_msg.header.frame_id =  frameid1;
       pub_range1.publish(&range_msg);
-      nh.spinOnce();
       range_msg.range = distance2_m;
       range_msg.header.frame_id =  frameid2;
       pub_range2.publish(&range_msg);
       nh.spinOnce();
     }
-
-    #include "ApplicationMonitor.h"
 
     void logfatal(const char *msg, uint32_t number) {
       char buf[30];
@@ -69,19 +67,20 @@ class RosCommunication {
       ApplicationMonitor.LoadHeader(Header);
       if (!bOnlyIfPresent || Header.m_uSavedReports != 0)
       {
-        nh.logfatal("Crashed");
-        logfatal(PSTR("Saved reports: %d"), (uint32_t)Header.m_uSavedReports);
-        logfatal(PSTR("Next report: %d"), (uint32_t)Header.m_uNextReport);
-    
+        nh.logfatal("Logged crashes:");
+        
         for (uReport = 0; uReport < Header.m_uSavedReports; ++uReport)
         {
           ApplicationMonitor.LoadReport(uReport, Report);
           uAddress = 0;
           memcpy(&uAddress, Report.m_auAddress, PROGRAM_COUNTER_SIZE);
-          logfatal(PSTR(": word-address= 0x%x"), (uint32_t)uAddress);
-          logfatal(PSTR(", data=0x%x"), (uint32_t)(Report.m_uData));
+          logfatal(PSTR(": byte-address= 0x%x"), (uint32_t)uAddress*2);
         }
       }
+    }
+
+    void sendCrashInfo(uint16_t uAddress) {
+      logfatal(PSTR("Just crashed!: byte-address= 0x%x"), ((uint32_t)uAddress)*2);
     }
 
 

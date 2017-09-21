@@ -1,3 +1,9 @@
 #!/bin/bash
 
-rosrun rosserial_python serial_node.py /dev/ttyUSB0 _baud:=115200
+PORT=/dev/ttyUSB0
+
+if [ ! -z $1 ]; then
+	PORT=$1
+fi
+
+rosrun rosserial_python serial_node.py $1 _baud:=115200
