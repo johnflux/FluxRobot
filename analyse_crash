@@ -1,0 +1,47 @@
+#!/bin/bash
+
+PROJECT_NAME="robot_head"
+BUILD_FOLDER=Arduino/build/
+ELF_NAME="$PROJECT_NAME.ino.elf"
+ELF="$BUILD_FOLDER"/"$ELF_NAME"
+ARDUINO_TOOLS_BIN="../Downloads/arduino-1.8.4/hardware/tools/avr/bin/"
+OBJDUMP="$ARDUINO_TOOLS_BIN/avr-objdump"
+
+echo "This program takes an code address (from an arduino crash) and turns that into source code"
+echo
+
+if [ ! -f "$ELF" ]; then
+	echo "Can't find: $ELF"
+	echo
+	echo "In the arduino GUI, go to File->Preferences  and click on the link at the bottom to the preferences.txt file"
+	echo "Close the GUI, then edit that preferences.txt file and add:"
+	echo
+	echo "build.path=$PWD/$BUILD_FOLDER"
+	echo
+	echo "(Speech marks not allowed.  ~ also not allowed)"
+	echo "Then compile the $PROJECT_NAME.  That should build this required .elf debug file"
+	echo
+	exit 1
+fi
+
+if [ -z "$1" ]; then
+	echo "Please run as:"
+	echo
+	echo "  $0 word-address"
+	echo
+	echo "For example:  $0 0x93A"
+	echo "This address is printed out when an arduino crashes and has a watchdog to do so (i.e. all the arduinos in FluxRobot)"
+	exit 1
+fi
+
+if [ ! -f "$OBJDUMP" ]; then
+	echo "No avr-objdump found.  Expecting it to exist in:"
+	echo
+	echo "   $OBJDUMP"
+	echo
+	echo "Please set ARDUINO_TOOLS_BIN to the correct path"
+	exit 1
+fi
+set -x
+$OBJDUMP -d -S --start-address=0x93A --line-numbers -C "$ELF" | head -n 20
+

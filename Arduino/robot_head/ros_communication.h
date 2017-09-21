@@ -1,12 +1,7 @@
 
 /* Replace ros.h with our own definition of a nodehandle, to save memory */
-#define _ROS_H_
-#if defined(ESP8266)
-#include "Esp8266Hardware.h"
-#endif
 
-#include <ros/node_handle.h>
-#include <ArduinoHardware.h>
+#include <ros.h>
 
 namespace ros {
   // Make these numbers as small as possible to save memory
@@ -33,12 +28,17 @@ class RosCommunication {
     }
 
     void setup() {
+      nh.getHardware()->setBaud(BAUDRATE);
       nh.initNode();
       nh.advertise(pub_range1);
       nh.advertise(pub_range2);
       setupDistanceSensorMessage();
     }
 
+    bool isConnected() {
+      return nh.connected();
+    }
+    
     void sendDistanceInfo(float distance1_m, float distance2_m) {
       range_msg.range = distance1_m;
       range_msg.header.stamp = nh.now();
@@ -50,6 +50,40 @@ class RosCommunication {
       pub_range2.publish(&range_msg);
       nh.spinOnce();
     }
+
+    #include "ApplicationMonitor.h"
+
+    void logfatal(const char *msg, uint32_t number) {
+      char buf[30];
+      snprintf_P(buf, 30, msg, number);
+      nh.logfatal(buf);
+    }
+
+    void dumpWatchdogInfo(bool bOnlyIfPresent, const Watchdog::CApplicationMonitor &ApplicationMonitor) {
+    
+      Watchdog::CApplicationMonitorHeader Header;
+      Watchdog::CCrashReport Report;
+      uint8_t uReport;
+      uint32_t uAddress;
+    
+      ApplicationMonitor.LoadHeader(Header);
+      if (!bOnlyIfPresent || Header.m_uSavedReports != 0)
+      {
+        nh.logfatal("Crashed");
+        logfatal(PSTR("Saved reports: %d"), (uint32_t)Header.m_uSavedReports);
+        logfatal(PSTR("Next report: %d"), (uint32_t)Header.m_uNextReport);
+    
+        for (uReport = 0; uReport < Header.m_uSavedReports; ++uReport)
+        {
+          ApplicationMonitor.LoadReport(uReport, Report);
+          uAddress = 0;
+          memcpy(&uAddress, Report.m_auAddress, PROGRAM_COUNTER_SIZE);
+          logfatal(PSTR(": word-address= 0x%x"), (uint32_t)uAddress);
+          logfatal(PSTR(", data=0x%x"), (uint32_t)(Report.m_uData));
+        }
+      }
+    }
+
 
    private:
     void setupDistanceSensorMessage() {

@@ -4,23 +4,35 @@
 #define DISTANCE_SENSOR_echoPin_2 8
 #define MOUTH_LED_pin 4
 
-#include <avr/wdt.h>
+/* If you want to modify the BAUDRATE, modify the ros_serial bash script as well */
+#define BAUDRATE 115200
 
+#include "ApplicationMonitor.h"
 #include "distance_sensor.h"
 #include "mouth_leds.h"
 #include "ros_communication.h"
 
+Watchdog::CApplicationMonitor ApplicationMonitor;
 RosCommunication rosCommunication;
 DistanceSensor distanceSensor;
 MouthLeds mouthLeds;
 
 void setup() {
-  Serial.begin(115200);
-  wdt_enable(WDTO_1S); // Enable watchdog timer - reset device if we die
+  Serial.begin(BAUDRATE); // Change via the #define if you want to change this, since ros also needs to know about this, in ros_communication.h
+  Serial.println("Hello!  Dumping information:");
+  ApplicationMonitor.Dump(Serial, false);
+  ApplicationMonitor.EnableWatchdog(Watchdog::CApplicationMonitor::Timeout_500ms); // This should be plenty of time to do anything - sonar requires just 60ms between measurements
+  MCUSR = MCUSR & B11110111;
+  WDTCSR = WDTCSR | B00011000; 
+  WDTCSR = B00100001;
+  WDTCSR = WDTCSR | B01000000;
+  MCUSR = MCUSR & B11110111;
+
   distanceSensor.setup(DISTANCE_SENSOR_trigPin_1, DISTANCE_SENSOR_echoPin_1,
                        DISTANCE_SENSOR_trigPin_2, DISTANCE_SENSOR_echoPin_2);
   mouthLeds.setup(MOUTH_LED_pin);
   rosCommunication.setup();
+  rosCommunication.dumpWatchdogInfo(false, ApplicationMonitor);
 }
 
 void loop() {
@@ -29,13 +41,15 @@ void loop() {
   float distance2_m;
 
   // the program is alive...for now. 
-  wdt_reset();
-
+  ApplicationMonitor.IAmAlive();
   distanceSensor.getDistance_m(ok, distance1_m, distance2_m);
+  if(!rosCommunication.isConnected())
+    Serial.println(distance1_m);
   if(ok) {
     mouthLeds.setMouthWidth(distance1_m*10.0 + 0.5);
     rosCommunication.sendDistanceInfo(distance1_m, distance2_m);
   } else {
     mouthLeds.setMouthBad();
   }
+  
 }

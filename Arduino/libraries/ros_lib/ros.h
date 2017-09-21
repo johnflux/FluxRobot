@@ -40,7 +40,7 @@
 #if defined(ESP8266)
   #include "Esp8266Hardware.h"
 #endif
-
+#if 0
 namespace ros
 {
 #if defined(__AVR_ATmega8__) || defined(__AVR_ATmega168__)
@@ -64,5 +64,6 @@ namespace ros
 
 #endif   
 }
+#endif
 
 #endif
