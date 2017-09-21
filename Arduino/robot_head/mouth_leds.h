@@ -6,7 +6,7 @@
 #define NUM_LEDS 8
 #define BRIGHTNESS 50
 
-
+/*
 byte neopix_gamma[] = {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,
@@ -24,6 +24,7 @@ byte neopix_gamma[] = {
   144,146,148,150,152,154,156,158,160,162,164,167,169,171,173,175,
   177,180,182,184,186,189,191,193,196,198,200,203,205,208,210,213,
   215,218,220,223,225,228,231,233,236,239,241,244,247,249,252,255 };
+  */
 
 class MouthLeds {
   Adafruit_NeoPixel strip;
@@ -36,11 +37,11 @@ class MouthLeds {
         if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
       #endif
       // End of trinket special code
-      strip.setBrightness(BRIGHTNESS);  
-      strip.begin(); 
+      strip.setBrightness(BRIGHTNESS);
+      strip.begin();
       strip.show(); // Initialize all pixels to 'off'
     }
-  
+
     void setMouthWidth(uint8_t width) {
       // Some example procedures showing how to display to the pixels:
       if (width > 8)
