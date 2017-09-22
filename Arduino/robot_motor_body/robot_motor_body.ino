@@ -1,15 +1,7 @@
-/* 
-This is a test sketch for the Adafruit assembled Motor Shield for Arduino v2
-It won't work with v1.x motor shields! Only for the v2's with built in PWM
-control
-
-For use with the Adafruit Motor Shield v2 
----->	http://www.adafruit.com/products/1438
-*/
 
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
-#include "utility/Adafruit_MS_PWMServoDriver.h"
+#include <PCA9685.h>
 
 Adafruit_MotorShield AFMSbot(0x60); // Default address, no jumpers
 Adafruit_MotorShield AFMStop(0x61); // Rightmost jumper closed
@@ -21,30 +13,61 @@ Adafruit_DCMotor *motorBackRight = AFMSbot.getMotor(2);     // Backwards
 Adafruit_DCMotor *motorFrontRight = AFMSbot.getMotor(3);    // Backwards
 Adafruit_DCMotor *motorMiddleRight = AFMSbot.getMotor(4);    // Backwards
 
+int servoBackRight = 0;
+int servoBackLeft = 1;
+int servoFrontRight = 15;
+int servoFrontLeft = 14;
 
+PCA9685 pwmController;                  // Library using default Wire and default linear phase balancing scheme
+void allMotorsForward(int speed=100);
 void setup() {
-  while (!Serial);
-  Serial.begin(9600);           // set up Serial library at 9600 bps
-  Serial.println("MMMMotor party!");
+  Serial.begin(115200);
+  Wire.setClock(100000);              // Supported baud rates of the PCA9685 servo controller are 100kHz, 400kHz, and 1000kHz
+  Wire.begin();
+
+  pwmController.resetDevices();       // Software resets all PCA9685 devices on Wire line
+// pwmController.setChannelPWM(0, 128 << 4); // Set PWM to 128/255, but in 4096 land
+//pwmController.setPWMFrequency(200); // Default is 200Hz, supports 24Hz to 1526Hz
 
   AFMSbot.begin(); // Start the bottom shield
   AFMStop.begin(); // Start the top shield
-   
-  // turn on the DC motor
-  motorMiddleLeft->setSpeed(100);
-  motorMiddleLeft->run(BACKWARD);
-  motorFrontLeft->setSpeed(100);
-  motorFrontLeft->run(FORWARD);
-  motorBackLeft->setSpeed(100);
-  motorBackLeft->run(BACKWARD);
 
-  motorBackRight->setSpeed(100);
-  motorBackRight->run(BACKWARD);
-  motorFrontRight->setSpeed(100);
-  motorFrontRight->run(BACKWARD);
-  motorMiddleRight->setSpeed(100);
-  motorMiddleRight->run(BACKWARD);
+  // We have motor driver on 0x60 (and broadcast all on 0x70) and servo driver on 0x40  
+  pwmController.init(B000000);        // Address pins A5-A0 set to B000000
+
+  Serial.println(pwmController.getChannelPWM(0)); // Should output 2048, which is 128 << 4
+
+  setAnglePWM(servoBackRight,83);
+  setAnglePWM(servoBackLeft,95);
+  setAnglePWM(servoFrontRight,63);
+  setAnglePWM(servoFrontLeft,90);
+
+  allMotorsForward();
+
+}
+
+void setAnglePWM(int motorNum, int pwm) {
+  pwmController.setChannelPWM(motorNum, pwm << 4); // Set PWM to 128/255, but in 4096 land
 }
 
 void loop() {
 }
+
+void allMotorsForward(int speed=100) {
+{
+  motorMiddleLeft->setSpeed(speed);
+  motorMiddleLeft->run(BACKWARD);
+  motorFrontLeft->setSpeed(speed);
+  motorFrontLeft->run(FORWARD);
+  motorBackLeft->setSpeed(speed);
+  motorBackLeft->run(BACKWARD);
+
+  motorBackRight->setSpeed(speed);
+  motorBackRight->run(BACKWARD);
+  motorFrontRight->setSpeed(speed);
+  motorFrontRight->run(BACKWARD);
+  motorMiddleRight->setSpeed(speed);
+  motorMiddleRight->run(BACKWARD);
+}
+}
+
