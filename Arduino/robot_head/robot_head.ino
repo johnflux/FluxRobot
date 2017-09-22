@@ -9,7 +9,7 @@
 
 void custom_crash_function(uint16_t return_address);
 
-#include "ApplicationMonitor.h"
+#include <ApplicationMonitor.h>
 #include "distance_sensor.h"
 #include "mouth_leds.h"
 #include "ros_communication.h"
@@ -29,11 +29,6 @@ void setup() {
   Serial.begin(BAUDRATE); // Change via the #define if you want to change this, since ros also needs to know about this, in ros_communication.h
   ApplicationMonitor.Dump(Serial, false);
   ApplicationMonitor.EnableWatchdog(Watchdog::CApplicationMonitor::Timeout_2s); // This should be plenty of time to do anything - sonar requires just 60ms between measurements
-  MCUSR = MCUSR & B11110111;
-  WDTCSR = WDTCSR | B00011000; 
-  WDTCSR = B00100001;
-  WDTCSR = WDTCSR | B01000000;
-  MCUSR = MCUSR & B11110111;
 
   distanceSensor.setup(DISTANCE_SENSOR_trigPin_1, DISTANCE_SENSOR_echoPin_1,
                        DISTANCE_SENSOR_trigPin_2, DISTANCE_SENSOR_echoPin_2);
@@ -62,6 +57,5 @@ void loop() {
     mouthLeds.setMouthBad();
   }
   rosCommunication.sendDistanceInfo(distance1_m, distance2_m);
-
-  rosCommunication.spinOnce();  
+  rosCommunication.spinOnce();
 }

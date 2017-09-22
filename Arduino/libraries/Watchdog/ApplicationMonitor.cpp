@@ -71,6 +71,11 @@ void CApplicationMonitor::EnableWatchdog(CApplicationMonitor::ETimeout Timeout)
 {
   wdt_enable(Timeout); 
   WDTCSR |= _BV(WDIE);
+  MCUSR = MCUSR & B11110111;
+  WDTCSR = WDTCSR | B00011000; 
+  WDTCSR = B00100001;
+  WDTCSR = WDTCSR | B01000000;
+  MCUSR = MCUSR & B11110111;
 }
 
 void CApplicationMonitor::DisableWatchdog()
