@@ -1,3 +1,5 @@
+#include <ros.h>
+#include <geometry_msgs/Twist.h>
 
 /* If you want to modify the BAUDRATE, modify the ros_serial bash script as well */
 #define BAUDRATE 115200
@@ -8,14 +10,27 @@ void custom_crash_function(uint16_t return_address);
 #include "ApplicationMonitor.h"
 #include "ros_communication.h"
 
+void doTwistCallback(const geometry_msgs::Twist& msg);
 Watchdog::CApplicationMonitor ApplicationMonitor;
-RosCommunication rosCommunication;
+RosCommunication rosCommunication(doTwistCallback);
 Motors motors;
 
 bool hasConnected=false;
 
 void custom_crash_function(uint16_t return_address) {
   rosCommunication.sendCrashInfo(return_address);
+}
+
+void doTwistCallback(const geometry_msgs::Twist& msg) {
+  if (msg.angular.z == 0 && msg.linear.x == 0)
+  {
+    motors.stopAll();
+  }
+  else
+  {
+    servoTurnAngle(msg.angular.z);
+    allMotorsSetSpeed(msg.linear.x * 100);
+  }
 }
 
 void setup() {
@@ -26,8 +41,6 @@ void setup() {
   motors.setup();
   rosCommunication.setup();
 }
-
-
 
 void loop() {
   // the program is alive...for now. 

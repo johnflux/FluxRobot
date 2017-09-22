@@ -1,4 +1,5 @@
 #include <ros.h>
+#include <geometry_msgs/Twist.h>
 
 namespace ros {
   // Make these numbers as small as possible to save memory
@@ -13,25 +14,18 @@ class RosCommunication {
 
   private:
     ros::NodeHandle  nh;
-    sensor_msgs::Range range_msg1;
-    sensor_msgs::Range range_msg2;
-    ros::Publisher pub_range1;
-    ros::Publisher pub_range2;
-    const char *frameid1 = "/ultrasound";
-    const char *frameid2 = "/ultrasound2";
-
+    ros::Subscriber<geometry_msgs::Twist> sub_twist;
+    const char *frameid = "/cmd_vel";
 
   public:
 
-    RosCommunication() : pub_range1(ros::Publisher("/ultrasound", &range_msg1)), pub_range2(ros::Publisher("/ultrasound2", &range_msg2)) {
+    RosCommunication(void (*doTwistCallback)(const geometry_msgs::Twist&)) : sub_twist(ros::Subscriber<geometry_msgs::Twist>(frameid, doTwistCallback)) {
     }
 
     void setup() {
       nh.getHardware()->setBaud(BAUDRATE);
       nh.initNode();
-      nh.advertise(pub_range1);
-      nh.advertise(pub_range2);
-      setupDistanceSensorMessage();
+      nh.subscribe(sub_twist);
     }
 
     bool isConnected() {
@@ -41,15 +35,9 @@ class RosCommunication {
     void spinOnce() {
       nh.spinOnce();
     }
+
     
-    void sendDistanceInfo(float distance1_m, float distance2_m) {
-      range_msg1.range = distance1_m;
-      range_msg2.header.stamp = range_msg1.header.stamp = nh.now();
-      pub_range1.publish(&range_msg1);
-      range_msg2.range = distance2_m;
-      pub_range2.publish(&range_msg2);
-      nh.spinOnce();
-    }
+
 
     void logfatal(const char *msg, uint32_t number) {
       char buf[30];
@@ -82,24 +70,6 @@ class RosCommunication {
     void sendCrashInfo(uint16_t uAddress) {
       logfatal(PSTR("Just crashed!: byte-address= 0x%x"), ((uint32_t)uAddress)*2);
     }
-
-
-   private:
-    void setupDistanceSensorMessage() {
-      range_msg1.radiation_type = sensor_msgs::Range::ULTRASOUND;
-      range_msg1.header.frame_id =  frameid1;
-      range_msg1.field_of_view = 0.01;
-      range_msg1.min_range = 0;
-      range_msg1.max_range = 100;
-
-      range_msg2.radiation_type = sensor_msgs::Range::ULTRASOUND;
-      range_msg2.header.frame_id =  frameid2;
-      range_msg2.field_of_view = 0.01;
-      range_msg2.min_range = 0;
-      range_msg2.max_range = 100;
-    }
-
-
 };
 
 

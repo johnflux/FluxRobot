@@ -5,12 +5,16 @@
 Adafruit_MotorShield AFMSbot(0x60); // Default address, no jumpers
 Adafruit_MotorShield AFMStop(0x61); // Rightmost jumper closed
 
-Adafruit_DCMotor *motorMiddleLeft = AFMStop.getMotor(2);    // Backwards
 Adafruit_DCMotor *motorFrontLeft = AFMStop.getMotor(3);     // Forwards
+Adafruit_DCMotor *motorMiddleLeft = AFMStop.getMotor(2);    // Backwards
 Adafruit_DCMotor *motorBackLeft = AFMStop.getMotor(1);      // Backwards
-Adafruit_DCMotor *motorBackRight = AFMSbot.getMotor(2);     // Backwards
-Adafruit_DCMotor *motorFrontRight = AFMSbot.getMotor(3);    // Backwards
 Adafruit_DCMotor *motorMiddleRight = AFMSbot.getMotor(4);   // Backwards
+Adafruit_DCMotor *motorFrontRight = AFMSbot.getMotor(3);    // Backwards
+Adafruit_DCMotor *motorBackRight = AFMSbot.getMotor(2);     // Backwards
+
+#define NUM_MOTORS 6
+const Adafruit_DCMotor *allMotors[NUM_MOTORS] = { motorFrontLeft, motorMiddleLeft, motorBackLeft, motorMiddleRight, motorFrontRight, motorBackRight };
+const bool motorIsBackwards[NUM_MOTORS] = {false, true, true, true, true, true};
 
 int servoBackRight = 0;
 int servoBackLeft = 1;
@@ -51,21 +55,29 @@ class Motors {
       pwmController.setChannelPWM(motorNum, pwm << 4); // Set PWM to 128/255, but in 4096 land
     }
 
-    void allMotorsForward(int speed=100) {
+    void servoTurnAngle(double angle) {
+      setAnglePWM(servoFrontRight,63 + angle);
+      setAnglePWM(servoFrontLeft,90 + angle);
+    }
+
+    void stopAll() {
+      for( int i = 0; i < NUM_MOTORS; ++i)
+        allMotors[i]->setSpeed(0);
+    }
+
+    void releaseAll() {
+      for( int i = 0; i < NUM_MOTORS; ++i)
+        allMotors[i]->run(RELEASE);
+    }
+
+    /* Linear speed forwards.  Can be negative to go backwards */
+    void allMotorsSetSpeed(int speed=100) {
     {
-      motorMiddleLeft->setSpeed(speed);
-      motorMiddleLeft->run(BACKWARD);
-      motorFrontLeft->setSpeed(speed);
-      motorFrontLeft->run(FORWARD);
-      motorBackLeft->setSpeed(speed);
-      motorBackLeft->run(BACKWARD);
-    
-      motorBackRight->setSpeed(speed);
-      motorBackRight->run(BACKWARD);
-      motorFrontRight->setSpeed(speed);
-      motorFrontRight->run(BACKWARD);
-      motorMiddleRight->setSpeed(speed);
-      motorMiddleRight->run(BACKWARD);
+      for( int i = 0; i < NUM_MOTORS; ++i) {
+        allMotors[i]->setSpeed(abs(speed));
+        const bool goBackwards == motorIsBackwards[i] == (speed > 0)
+        allMotors[i]->run(goBackwards ? BACKWARD : FORWARD);
+      }
     }
 }
 
