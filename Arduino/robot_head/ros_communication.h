@@ -5,7 +5,7 @@
 
 namespace ros {
   // Make these numbers as small as possible to save memory
-  typedef NodeHandle_<ArduinoHardware, 2/*max subscribers*/, 4/*max publishers*/, 100/*input size*/, 200/*output size*/> NodeHandle;
+  typedef NodeHandle_<ArduinoHardware, 1/*max subscribers*/, 2/*max publishers*/, 100/*input size*/, 100/*output size*/> NodeHandle;
 };
 
 #include <ros/time.h>
