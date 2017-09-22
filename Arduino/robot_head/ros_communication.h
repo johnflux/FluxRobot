@@ -47,11 +47,9 @@ class RosCommunication {
     
     void sendDistanceInfo(float distance1_m, float distance2_m) {
       range_msg1.range = distance1_m;
-      range_msg1.header.stamp = nh.now();
+      range_msg2.header.stamp = range_msg1.header.stamp = nh.now();
       pub_range1.publish(&range_msg1);
-      nh.spinOnce();
       range_msg2.range = distance2_m;
-      range_msg2.header.stamp = nh.now();
       pub_range2.publish(&range_msg2);
       nh.spinOnce();
     }

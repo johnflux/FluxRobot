@@ -42,25 +42,26 @@ void setup() {
 }
 
 void loop() {
-  bool ok;
+  bool ok1;
+  bool ok2;
   float distance1_m;
   float distance2_m;
 
   // the program is alive...for now. 
   ApplicationMonitor.IAmAlive();
-  distanceSensor.getDistance_m(ok, distance1_m, distance2_m);
+  distanceSensor.getDistance_m(ok1, distance1_m, ok2, distance2_m);
   if(!rosCommunication.isConnected()) {
     Serial.println(distance1_m);
   } else if (!hasConnected) {
     hasConnected = true;
     rosCommunication.dumpWatchdogInfo(false, ApplicationMonitor);
   }
-  if(ok) {
+  if(ok1) {
     mouthLeds.setMouthWidth(distance1_m*10.0 + 0.5);
-    rosCommunication.sendDistanceInfo(distance1_m, distance2_m);
   } else {
     mouthLeds.setMouthBad();
   }
+  rosCommunication.sendDistanceInfo(distance1_m, distance2_m);
 
   rosCommunication.spinOnce();  
 }
