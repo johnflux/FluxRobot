@@ -14,6 +14,7 @@ void doTwistCallback(const geometry_msgs::Twist& msg);
 Watchdog::CApplicationMonitor ApplicationMonitor;
 RosCommunication rosCommunication(doTwistCallback);
 Motors motors;
+JoystickControl joystick;
 
 bool hasConnected=false;
 
@@ -36,19 +37,24 @@ void doTwistCallback(const geometry_msgs::Twist& msg) {
 void setup() {
   Serial.begin(BAUDRATE);
   ApplicationMonitor.Dump(Serial, false);
-  ApplicationMonitor.EnableWatchdog(Watchdog::CApplicationMonitor::Timeout_2s); // This should be plenty of time to do anything - sonar requires just 60ms between measurements
+  ApplicationMonitor.EnableWatchdog(Watchdog::CApplicationMonitor::Timeout_2s);
 
   motors.setup();
   rosCommunication.setup();
+  joystick.setup();
 }
 
 void loop() {
-  // the program is alive...for now. 
+  // the program is alive...for now.
   ApplicationMonitor.IAmAlive();
   if (!hasConnected && rosCommunication.isConnected()) {
     hasConnected = true;
     rosCommunication.dumpWatchdogInfo(false, ApplicationMonitor);
   }
+
+  int joyX = joystick.joyXValue();
+  int joyY = joystick.joyYValue();
+  rosCommunication.sendTwistCommand( joyX, joyY );
   rosCommunication.spinOnce();
 }
 
