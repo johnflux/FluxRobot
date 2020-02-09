@@ -2,86 +2,83 @@
 #define DISTANCE_SENSOR_echoPin_1 12
 #define DISTANCE_SENSOR_trigPin_2 7
 #define DISTANCE_SENSOR_echoPin_2 8
-#define MOUTH_LED_pin 4
+#define MOUTH_LED_pin 5
+#define ARM_LED_pin 4
 
 /* If you want to modify the BAUDRATE, modify the ros_serial bash script as well */
 #define BAUDRATE 115200
 
-void custom_crash_function(uint16_t return_address);
-
-#include <ApplicationMonitor.h>
-#include "distance_sensor.h"
+//#include "distance_sensor.h"
 #include "AllEffects_NeoPixel.h"
-#include "ros_communication.h"
 
-Watchdog::CApplicationMonitor ApplicationMonitor;
-RosCommunication rosCommunication;
-DistanceSensor distanceSensor;
-MouthLeds mouthLeds;
-
-bool hasConnected=false;
-
-void custom_crash_function(uint16_t return_address) {
-  rosCommunication.sendCrashInfo(return_address);
-}
+//DistanceSensor distanceSensor;
+Leds mouthLeds(MOUTH_LED_pin, 8 /*num_leds*/);
+Leds armLed(ARM_LED_pin, 1 /* num_leds */, 255 /* Full brightness*/);
 
 void setup() {
-  Serial.begin(BAUDRATE); // Change via the #define if you want to change this, since ros also needs to know about this, in ros_communication.h
-  //ApplicationMonitor.Dump(Serial, false);
-  //ApplicationMonitor.EnableWatchdog(Watchdog::CApplicationMonitor::Timeout_2s); // This should be plenty of time to do anything - sonar requires just 60ms between measurements
-
+  Serial.begin(BAUDRATE);
+  while(!Serial) {
+     // wait
+  }
   //distanceSensor.setup(DISTANCE_SENSOR_trigPin_1, DISTANCE_SENSOR_echoPin_1,
   //                     DISTANCE_SENSOR_trigPin_2, DISTANCE_SENSOR_echoPin_2);
-  mouthLeds.setup(MOUTH_LED_pin);
-  //rosCommunication.setup();
+  mouthLeds.setup();
+  armLed.setup();
+  for (int i= 0; i < 3; ++i) {
+    mouthLeds.setAll(255,0,0);
+    armLed.setAll(255,0,0);
+    delay(100);
+    mouthLeds.setAll(0,255,0);
+    armLed.setAll(0,255,0);
+    delay(100);
+    mouthLeds.setAll(0,0,255);
+    armLed.setAll(0,0,255);
+    delay(100);
+  }
+  mouthLeds.setAll(0,0,0);
+  armLed.setAll(0,0,0);
 }
 
 void readFromSerial() {
-  while(Serial.available() > 0) {
-    char c = Serial.read();
+  char c;
+  while((c = Serial.read()) != -1) {
     //Serial.print("Found:");
     Serial.print(c);
     if (c >= '0' && c <= '9') {
       //Serial.print("showing digit ");
       //Serial.println((int)(c-'0'));
       mouthLeds.showNumber(c - '0');
-      delay(3000);
-    } else if(c == '.') {
+      delay(1500);
+      mouthLeds.clear();
+      delay(200);
+    } else if (c == '.') {
       //Serial.println("showing dot");
       mouthLeds.showDot();
-      delay(2000);
+      delay(1000);
+      mouthLeds.clear();
+      delay(200);
+    } else if (c == 'r') {
+      armLed.setAll(255,0,0);
+      Serial.print("set to red");
+    } else if (c == 'g') {
+      armLed.setAll(0,255,0);
+      Serial.print("set to green");
+    } else if (c == 'b') {
+      armLed.setAll(0,0,255);
+      Serial.print("set to blue");
+    } else if (c == 'o') {
+      armLed.setAll(0,0,0);
+      Serial.print("set to off");
     }
   }
 }
 
 void loop() {
-  /*bool ok1;
-  bool ok2;
-  float distance1_m;
-  float distance2_m;*/
-  Serial.println("Send an ip address like 2.4.5.2");
+  Serial.println("Send an ip address like 2.4.5.2, or one of r,g,b or o (for off) for the arm led");
   mouthLeds.loop();
   for (int i = 0; i < random(50,100); ++i) {
     readFromSerial();
     delay(100);
   }
   readFromSerial();
-  /*
-
-  // the program is alive...for now. 
-  ApplicationMonitor.IAmAlive();
-  distanceSensor.getDistance_m(ok1, distance1_m, ok2, distance2_m);
-  if(!rosCommunication.isConnected()) {
-    Serial.println(distance1_m);
-  } else if (!hasConnected) {
-    hasConnected = true;
-    rosCommunication.dumpWatchdogInfo(false, ApplicationMonitor);
-  }
-  if(ok1) {
-    mouthLeds.setMouthWidth(distance1_m*10.0 + 0.5);
-  } else {
-    mouthLeds.setMouthBad();
-  }
-  rosCommunication.sendDistanceInfo(distance1_m, distance2_m);
-  rosCommunication.spinOnce();*/
 }

@@ -3,22 +3,25 @@
   #include <avr/power.h>
 #endif
 
-#define NUM_LEDS 8
-#define BRIGHTNESS 50
+#define MAX_LEDS 8
 
-class MouthLeds {
+class Leds {
   Adafruit_NeoPixel strip;
   byte selectedEffect=0;
+  const int num_leds;
+  int brightness;
  
   public:
-    void setup(int pin) {
-      strip =  Adafruit_NeoPixel(NUM_LEDS, pin, NEO_GRB + NEO_KHZ800);
-      // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
+    Leds(int pin, int num_leds_ /* must be less than MAX_LEDS */, int brightness_ = 50 /* Between 0 to 255 */) : num_leds(num_leds_), brightness(brightness_) {
+      strip =  Adafruit_NeoPixel(num_leds, pin, NEO_GRB + NEO_KHZ800);
+    }
+    void setup() {
+      // This is for Trinket 5V 16MHz - might as well leave it in though - it doesn't hurt anything
       #if defined (__AVR_ATtiny85__)
         if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
       #endif
       // End of trinket special code
-      strip.setBrightness(BRIGHTNESS);
+      strip.setBrightness(brightness);
       strip.begin();
       strip.show(); // Initialize all pixels to 'off'
     }
@@ -43,8 +46,8 @@ class MouthLeds {
                 }
                 
       case 2  : {
-                  // Strobe - Color (red, green, blue), number of flashes, flash speed, end pause
-                  Strobe(0xff, 0xff, 0xff, 10, 50, 1000);
+                  // Strobe - Color (red, green, blue), number of flashes, flash speed
+                  Strobe(0xff, 0xff, 0xff, 5, 50);
                   break;
                 }
   
@@ -63,25 +66,25 @@ class MouthLeds {
                 
       case 4  : {
                   // CylonBounce - Color (red, green, blue), eye size, speed delay, end pause
-                  CylonBounce(0xff, 0x00, 0x00, 4, 10, 50);
+                  CylonBounce(0xff, 0x00, 0x00, 2, 10, 0);
                   break;
                 }
                 
       case 5  : {
                   // NewKITT - Color (red, green, blue), eye size, speed delay, end pause
-                  NewKITT(0xff, 0x00, 0x00, 8, 10, 50);
+                  NewKITT(0xff, 0x00, 0x00, 2, 10, 0);
                   break;
                 }
                 
       case 6  : {
                   // Twinkle - Color (red, green, blue), count, speed delay, only one twinkle (true/false) 
-                  Twinkle(0xff, 0x00, 0x00, 10, 100, false);
+                  Twinkle(0xff, 0x00, 0x00, 3, 50, false);
                   break;
                 }
                 
       case 7  : { 
                   // TwinkleRandom - twinkle count, speed delay, only one (true/false)
-                  TwinkleRandom(20, 100, false);
+                  TwinkleRandom(5, 50, false);
                   break;
                 }
                 
@@ -93,40 +96,40 @@ class MouthLeds {
                  
       case 9  : {
                   // SnowSparkle - Color (red, green, blue), sparkle delay, speed delay
-                  SnowSparkle(0x10, 0x10, 0x10, 20, random(100,1000));
+                  SnowSparkle(0x10, 0x10, 0x10, 10, random(50,100));
                   break;
                 }
                 
       case 10 : {
                   // Running Lights - Color (red, green, blue), wave dealy
-                  RunningLights(0xff,0x00,0x00, 50);  // red
-                  RunningLights(0xff,0xff,0xff, 50);  // white
-                  RunningLights(0x00,0x00,0xff, 50);  // blue
+                  RunningLights(0xff,0x00,0x00, 20);  // red
+                  RunningLights(0xff,0xff,0xff, 20);  // white
+                  RunningLights(0x00,0x00,0xff, 20);  // blue
                   break;
                 }
                 
       case 11 : {
                   // colorWipe - Color (red, green, blue), speed delay
-                  colorWipe(0x00,0xff,0x00, 50);
-                  colorWipe(0x00,0x00,0x00, 50);
+                  colorWipe(0x00,0xff,0x00, 20);
+                  colorWipe(0x00,0x00,0x00, 20);
                   break;
                 }
   
       case 12 : {
                   // rainbowCycle - speed delay
-                  rainbowCycle(20);
+                  rainbowCycle(10);
                   break;
                 }
   
       case 13 : {
                   // theatherChase - Color (red, green, blue), speed delay
-                  theaterChase(0xff,0,0,50);
+                  theaterChase(0xff,0,0,20);
                   break;
                 }
   
       case 14 : {
                   // theaterChaseRainbow - Speed delay
-                  theaterChaseRainbow(50);
+                  theaterChaseRainbow(20);
                   break;
                 }
   
@@ -158,7 +161,7 @@ class MouthLeds {
   
       case 18 : {
                   // meteorRain - Color (red, green, blue), meteor size, trail decay, random trail decay (true/false), speed delay 
-                  meteorRain(0xff,0xff,0xff,10, 64, true, 30);
+                  meteorRain(0xff,0xff,0xff,10, 64, true, 20);
                   break;
                 }
     }
@@ -174,49 +177,79 @@ class MouthLeds {
       setAll(255,255,255);
     } else if (n == 9) {
       setPixel(0, 255, 255, 255);
-      for(int i = 1; i < NUM_LEDS; i++ ) {
+      for(int i = 1; i < num_leds; i++ ) {
         setPixel(i, 0, 255, 0);
       }
     } else {
-      for(int i = 0; i < NUM_LEDS; i++ ) {
-        setPixel(i, 0, ((i < n) ? 255 : 0), 0); 
+      switch(n) {
+        case 1:
+          showPattern(0,0,0,1,0,0,0,0,   0,255,0);
+          break;
+        case 2:
+          showPattern(0,0,0,1,1,0,0,0,   0,255,0);
+          break;
+        case 3:
+          showPattern(0,0,1,1,1,0,0,0,   0,255,0);
+          break;
+        case 4:
+          showPattern(0,0,1,1,1,1,0,0,   0,255,0);
+          break;
+        case 5:
+          showPattern(0,1,1,1,1,1,0,0,   0,255,0);
+          break;
+        case 6:
+          showPattern(0,1,1,1,1,1,1,0,   0,255,0);
+          break;
+        case 7:
+          showPattern(1,1,1,1,1,1,1,0,   0,255,0);
+          break;
+        case 8:
+          showPattern(1,1,1,1,1,1,1,1,   0,255,0);
+          break;
       }
     }
     showStrip();
+  }
+  void showPattern(int a, int b, int c, int d, int e, int f, int g, int h, byte red, byte green, byte blue) {
+    setPixel(0, a>0?red:0, a>0?green:0, a>0?blue:0);
+    setPixel(1, b>0?red:0, b>0?green:0, b>0?blue:0);
+    setPixel(2, c>0?red:0, c>0?green:0, c>0?blue:0);
+    setPixel(3, d>0?red:0, d>0?green:0, d>0?blue:0);
+    setPixel(4, e>0?red:0, e>0?green:0, e>0?blue:0);
+    setPixel(5, f>0?red:0, f>0?green:0, f>0?blue:0);
+    setPixel(6, g>0?red:0, g>0?green:0, g>0?blue:0);
+    setPixel(7, h>0?red:0, h>0?green:0, h>0?blue:0);
   }
 
   void showDot() {
     setAll(0,0,255);
   }
   
-  private:
-  
   // *************************
   // ** LEDEffect Functions **
   // *************************
   
   void RGBLoop(){
-    for(int j = 0; j < 3; j++ ) { 
-      // Fade IN
-      for(int k = 0; k < 256; k++) { 
-        switch(j) { 
-          case 0: setAll(k,0,0); break;
-          case 1: setAll(0,k,0); break;
-          case 2: setAll(0,0,k); break;
-        }
-        showStrip();
-        delay(3);
+    int j = random(3);
+    // Fade IN
+    for(int k = 0; k < 256; k++) { 
+      switch(j) { 
+        case 0: setAll(k,0,0); break;
+        case 1: setAll(0,k,0); break;
+        case 2: setAll(0,0,k); break;
       }
-      // Fade OUT
-      for(int k = 255; k >= 0; k--) { 
-        switch(j) { 
-          case 0: setAll(k,0,0); break;
-          case 1: setAll(0,k,0); break;
-          case 2: setAll(0,0,k); break;
-        }
-        showStrip();
-        delay(3);
+      showStrip();
+      delay(3);
+    }
+    // Fade OUT
+    for(int k = 255; k >= 0; k--) { 
+      switch(j) { 
+        case 0: setAll(k,0,0); break;
+        case 1: setAll(0,k,0); break;
+        case 2: setAll(0,0,k); break;
       }
+      showStrip();
+      delay(3);
     }
   }
   
@@ -240,7 +273,7 @@ class MouthLeds {
     }
   }
   
-  void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause){
+  void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay){
     for(int j = 0; j < StrobeCount; j++) {
       setAll(red,green,blue);
       showStrip();
@@ -249,8 +282,6 @@ class MouthLeds {
       showStrip();
       delay(FlashDelay);
     }
-   
-   delay(EndPause);
   }
   
   void HalloweenEyes(byte red, byte green, byte blue, 
@@ -258,7 +289,7 @@ class MouthLeds {
                      boolean Fade, int Steps, int FadeDelay,
                      int EndPause){    
     int i;
-    int StartPoint  = random( 0, NUM_LEDS - (2*EyeWidth) - EyeSpace );
+    int StartPoint  = random( 0, num_leds - (2*EyeWidth) - EyeSpace );
     int Start2ndEye = StartPoint + EyeWidth + EyeSpace;
     
     for(i = 0; i < EyeWidth; i++) {
@@ -293,7 +324,7 @@ class MouthLeds {
   
   void CylonBounce(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay){
   
-    for(int i = 0; i < NUM_LEDS-EyeSize-2; i++) {
+    for(int i = 0; i < num_leds-EyeSize-2; i++) {
       setAll(0,0,0);
       setPixel(i, red/10, green/10, blue/10);
       for(int j = 1; j <= EyeSize; j++) {
@@ -306,7 +337,7 @@ class MouthLeds {
   
     delay(ReturnDelay);
   
-    for(int i = NUM_LEDS-EyeSize-2; i > 0; i--) {
+    for(int i = num_leds-EyeSize-2; i > 0; i--) {
       setAll(0,0,0);
       setPixel(i, red/10, green/10, blue/10);
       for(int j = 1; j <= EyeSize; j++) {
@@ -333,7 +364,7 @@ class MouthLeds {
   
   // used by NewKITT
   void CenterToOutside(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
-    for(int i =((NUM_LEDS-EyeSize)/2); i>=0; i--) {
+    for(int i =((num_leds-EyeSize)/2); i>=0; i--) {
       setAll(0,0,0);
       
       setPixel(i, red/10, green/10, blue/10);
@@ -342,11 +373,11 @@ class MouthLeds {
       }
       setPixel(i+EyeSize+1, red/10, green/10, blue/10);
       
-      setPixel(NUM_LEDS-i, red/10, green/10, blue/10);
+      setPixel(num_leds-i, red/10, green/10, blue/10);
       for(int j = 1; j <= EyeSize; j++) {
-        setPixel(NUM_LEDS-i-j, red, green, blue); 
+        setPixel(num_leds-i-j, red, green, blue); 
       }
-      setPixel(NUM_LEDS-i-EyeSize-1, red/10, green/10, blue/10);
+      setPixel(num_leds-i-EyeSize-1, red/10, green/10, blue/10);
       
       showStrip();
       delay(SpeedDelay);
@@ -356,7 +387,7 @@ class MouthLeds {
   
   // used by NewKITT
   void OutsideToCenter(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
-    for(int i = 0; i<=((NUM_LEDS-EyeSize)/2); i++) {
+    for(int i = 0; i<=((num_leds-EyeSize)/2); i++) {
       setAll(0,0,0);
       
       setPixel(i, red/10, green/10, blue/10);
@@ -365,11 +396,11 @@ class MouthLeds {
       }
       setPixel(i+EyeSize+1, red/10, green/10, blue/10);
       
-      setPixel(NUM_LEDS-i, red/10, green/10, blue/10);
+      setPixel(num_leds-i, red/10, green/10, blue/10);
       for(int j = 1; j <= EyeSize; j++) {
-        setPixel(NUM_LEDS-i-j, red, green, blue); 
+        setPixel(num_leds-i-j, red, green, blue); 
       }
-      setPixel(NUM_LEDS-i-EyeSize-1, red/10, green/10, blue/10);
+      setPixel(num_leds-i-EyeSize-1, red/10, green/10, blue/10);
       
       showStrip();
       delay(SpeedDelay);
@@ -379,7 +410,7 @@ class MouthLeds {
   
   // used by NewKITT
   void LeftToRight(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
-    for(int i = 0; i < NUM_LEDS-EyeSize-2; i++) {
+    for(int i = 0; i < num_leds-EyeSize-2; i++) {
       setAll(0,0,0);
       setPixel(i, red/10, green/10, blue/10);
       for(int j = 1; j <= EyeSize; j++) {
@@ -394,7 +425,7 @@ class MouthLeds {
   
   // used by NewKITT
   void RightToLeft(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
-    for(int i = NUM_LEDS-EyeSize-2; i > 0; i--) {
+    for(int i = num_leds-EyeSize-2; i > 0; i--) {
       setAll(0,0,0);
       setPixel(i, red/10, green/10, blue/10);
       for(int j = 1; j <= EyeSize; j++) {
@@ -411,7 +442,7 @@ class MouthLeds {
     setAll(0,0,0);
     
     for (int i=0; i<Count; i++) {
-       setPixel(random(NUM_LEDS),red,green,blue);
+       setPixel(random(num_leds),red,green,blue);
        showStrip();
        delay(SpeedDelay);
        if(OnlyOne) { 
@@ -426,7 +457,7 @@ class MouthLeds {
     setAll(0,0,0);
     
     for (int i=0; i<Count; i++) {
-       setPixel(random(NUM_LEDS),random(0,255),random(0,255),random(0,255));
+       setPixel(random(num_leds),random(0,255),random(0,255),random(0,255));
        showStrip();
        delay(SpeedDelay);
        if(OnlyOne) { 
@@ -438,7 +469,7 @@ class MouthLeds {
   }
   
   void Sparkle(byte red, byte green, byte blue, int SpeedDelay) {
-    int Pixel = random(NUM_LEDS);
+    int Pixel = random(num_leds);
     setPixel(Pixel,red,green,blue);
     showStrip();
     delay(SpeedDelay);
@@ -448,7 +479,7 @@ class MouthLeds {
   void SnowSparkle(byte red, byte green, byte blue, int SparkleDelay, int SpeedDelay) {
     setAll(red,green,blue);
     
-    int Pixel = random(NUM_LEDS);
+    int Pixel = random(num_leds);
     setPixel(Pixel,0xff,0xff,0xff);
     showStrip();
     delay(SparkleDelay);
@@ -460,10 +491,10 @@ class MouthLeds {
   void RunningLights(byte red, byte green, byte blue, int WaveDelay) {
     int Position=0;
     
-    for(int i=0; i<NUM_LEDS*2; i++)
+    for(int i=0; i<num_leds*2; i++)
     {
         Position++; // = 0; //Position + Rate;
-        for(int i=0; i<NUM_LEDS; i++) {
+        for(int i=0; i<num_leds; i++) {
           // sine wave, 3 offset waves make a rainbow!
           //float level = sin(i+Position) * 127 + 128;
           //setPixel(i,level,0,0);
@@ -479,7 +510,7 @@ class MouthLeds {
   }
   
   void colorWipe(byte red, byte green, byte blue, int SpeedDelay) {
-    for(uint16_t i=0; i<NUM_LEDS; i++) {
+    for(uint16_t i=0; i<num_leds; i++) {
         setPixel(i, red, green, blue);
         showStrip();
         delay(SpeedDelay);
@@ -489,10 +520,12 @@ class MouthLeds {
   void rainbowCycle(int SpeedDelay) {
     byte *c;
     uint16_t i, j;
+
+    uint16_t start = random(0,200);
   
-    for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
-      for(i=0; i< NUM_LEDS; i++) {
-        c=Wheel(((i * 256 / NUM_LEDS) + j) & 255);
+    for(j=start; j<start+50; j++) {
+      for(i=0; i< num_leds; i++) {
+        c=Wheel(((i * 256 / num_leds) + j) & 255);
         setPixel(i, *c, *(c+1), *(c+2));
       }
       showStrip();
@@ -524,28 +557,28 @@ class MouthLeds {
   }
   
   void theaterChase(byte red, byte green, byte blue, int SpeedDelay) {
-    for (int j=0; j<10; j++) {  //do 10 cycles of chasing
-      for (int q=0; q < 3; q++) {
-        for (int i=0; i < NUM_LEDS; i=i+3) {
-          setPixel(i+q, red, green, blue);    //turn every third pixel on
-        }
-        showStrip();
-       
-        delay(SpeedDelay);
-       
-        for (int i=0; i < NUM_LEDS; i=i+3) {
-          setPixel(i+q, 0,0,0);        //turn every third pixel off
-        }
+    for (int q=0; q < 3; q++) {
+      for (int i=0; i < num_leds; i=i+3) {
+        setPixel(i+q, red, green, blue);    //turn every third pixel on
+      }
+      showStrip();
+     
+      delay(SpeedDelay);
+     
+      for (int i=0; i < num_leds; i=i+3) {
+        setPixel(i+q, 0,0,0);        //turn every third pixel off
       }
     }
   }
   
   void theaterChaseRainbow(int SpeedDelay) {
     byte *c;
+    const int width = 50;
+    int start = random(0,255-width);
     
-    for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
+    for (int j=start; j < start+width; j++) {     // cycle all 256 colors in the wheel
       for (int q=0; q < 3; q++) {
-          for (int i=0; i < NUM_LEDS; i=i+3) {
+          for (int i=0; i < num_leds; i=i+3) {
             c = Wheel( (i+j) % 255);
             setPixel(i+q, *c, *(c+1), *(c+2));    //turn every third pixel on
           }
@@ -553,7 +586,7 @@ class MouthLeds {
          
           delay(SpeedDelay);
          
-          for (int i=0; i < NUM_LEDS; i=i+3) {
+          for (int i=0; i < num_leds; i=i+3) {
             setPixel(i+q, 0,0,0);        //turn every third pixel off
           }
       }
@@ -561,12 +594,12 @@ class MouthLeds {
   }
   
   void Fire(int Cooling, int Sparking, int SpeedDelay) {
-    static byte heat[NUM_LEDS];
+    static byte heat[MAX_LEDS];
     int cooldown;
     
     // Step 1.  Cool down every cell a little
-    for( int i = 0; i < NUM_LEDS; i++) {
-      cooldown = random(0, ((Cooling * 10) / NUM_LEDS) + 2);
+    for( int i = 0; i < num_leds; i++) {
+      cooldown = random(0, ((Cooling * 10) / num_leds) + 2);
       
       if(cooldown>heat[i]) {
         heat[i]=0;
@@ -576,7 +609,7 @@ class MouthLeds {
     }
     
     // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-    for( int k= NUM_LEDS - 1; k >= 2; k--) {
+    for( int k= num_leds - 1; k >= 2; k--) {
       heat[k] = (heat[k - 1] + heat[k - 2] + heat[k - 2]) / 3;
     }
       
@@ -588,7 +621,7 @@ class MouthLeds {
     }
   
     // Step 4.  Convert heat to LED colors
-    for( int j = 0; j < NUM_LEDS; j++) {
+    for( int j = 0; j < num_leds; j++) {
       setPixelHeatColor(j, heat[j] );
     }
   
@@ -656,12 +689,14 @@ class MouthLeds {
             }
           }
         }
-        Position[i] = round( Height[i] * (NUM_LEDS - 1) / StartHeight);
+        Position[i] = num_leds/2 - 1 - round( Height[i] * (num_leds/2 - 1) / StartHeight);
+        // 0,1,2,3
       }
   
       ballsStillBouncing = false; // assume no balls bouncing
       for (int i = 0 ; i < BallCount ; i++) {
         setPixel(Position[i],colors[i][0],colors[i][1],colors[i][2]);
+        setPixel(num_leds-1-Position[i],colors[i][0],colors[i][1],colors[i][2]);
         if ( ballBouncing[i] ) {
           ballsStillBouncing = true;
         }
@@ -675,11 +710,11 @@ class MouthLeds {
   void meteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay) {  
     setAll(0,0,0);
     
-    for(int i = 0; i < NUM_LEDS+NUM_LEDS; i++) {
+    for(int i = 0; i < num_leds+num_leds; i++) {
       
       
       // fade brightness all LEDs one step
-      for(int j=0; j<NUM_LEDS; j++) {
+      for(int j=0; j<num_leds; j++) {
         if( (!meteorRandomDecay) || (random(10)>5) ) {
           fadeToBlack(j, meteorTrailDecay );        
         }
@@ -687,7 +722,7 @@ class MouthLeds {
       
       // draw meteor
       for(int j = 0; j < meteorSize; j++) {
-        if( ( i-j <NUM_LEDS) && (i-j>=0) ) {
+        if( ( i-j <num_leds) && (i-j>=0) ) {
           setPixel(i-j, red, green, blue);
         } 
       }
@@ -722,9 +757,6 @@ class MouthLeds {
    #endif  
   }
   
-  // *** REPLACE TO HERE ***
-  
-  
   
   // ***************************************
   // ** FastLed/NeoPixel Common Functions **
@@ -758,7 +790,7 @@ class MouthLeds {
   
   // Set all LEDs to a given color and apply it (visible)
   void setAll(byte red, byte green, byte blue) {
-    for(int i = 0; i < NUM_LEDS; i++ ) {
+    for(int i = 0; i < num_leds; i++ ) {
       setPixel(i, red, green, blue); 
     }
     showStrip();
